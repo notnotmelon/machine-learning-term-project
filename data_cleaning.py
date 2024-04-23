@@ -305,10 +305,15 @@ with open(csv_file_path, 'r', encoding='utf-8') as file:
             row[fire_cause_index] = fire_cause_map.get(row[fire_cause_index].lower(), 0)
             row[state_index] = row[state_index][3:] # Remove 'US-' from the state code
             row[incident_size_index] = math.log(float(row[incident_size_index]))
+            row[longitude_index] = float(row[longitude_index]) + 120
+            row[latitude_index] = float(row[latitude_index]) - 36
             filtered_row = [row[i] for i in range(len(row)) if i not in ignore_indices]
 
             month, day, year = row[date_index].split(' ')[0].split('/')
             filtered_row.append(month)
+            filtered_row.append(row[longitude_index] ** 2)
+            filtered_row.append(row[latitude_index] ** 2)
+            filtered_row.append(row[latitude_index] * row[longitude_index])
 
             # Add the filtered row to the list
             filtered_rows.append(filtered_row)
@@ -318,6 +323,9 @@ with open(csv_file_path, 'r', encoding='utf-8') as file:
 
     new_header = [header[i] for i in range(len(header)) if i not in ignore_indices]
     new_header.append('Month')
+    new_header.append('Longitude^2')
+    new_header.append('Latitude^2')
+    new_header.append('Longitude * Latitude')
 
     filtered_rows.sort(key=lambda x: float(x[0]))
 
