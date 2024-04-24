@@ -39,14 +39,11 @@ public class LinearRegression {
     }
 
     public double predict(double[] input) {
-        double[] biased = new double[input.length + 4];
+        double[] biased = new double[input.length + 1];
         biased[0] = 1.0; // Bias term
         for (int i = 0; i < input.length; i++) {
             biased[i + 1] = input[i];
         }
-        biased[input.length + 1] = input[3] * input[3]; // Longitude^2
-        biased[input.length + 2] = input[2] * input[2]; // Latitude^2
-        biased[input.length + 3] = input[2] * input[3]; // Latitude * Longitude
         return Math.pow(Math.E, new Vector(biased).dot(weights));
     }
 }

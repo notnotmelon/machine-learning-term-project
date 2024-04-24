@@ -3,11 +3,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
+    public static Scanner s = new Scanner(System.in);
     public static String csvPath = "filtered_data.csv";
-    public static double learningRate = 0.00003;
-    public static int epochs = 10000;
+    public static double[] calculatedWeights = {-9.67e-02, -5.05e-03, 2.77e-02, -5.03e-02, -2.56e-01, 5.46e-04, 1.49e-03, -4.19e-05};
 
     public static Pair<Matrix, Vector> loadCSV(String path) {
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
@@ -39,22 +40,89 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        // Step 1: Load the data
+        print("Good morning!");
+        print("Welcome to the Fire Prediction System.");
+        print("This algorithm predicts the expected # of acres burned in a wildfire based on several parameters.");
+        print("Disclaimer: It is only trained for locations in California.");
+        print("\n");
+        print("Would you like to run predictions or train the model? (p/t)");
+
+        while (true) {
+            String choice = s.nextLine();
+            if (choice.equals("p")) {
+                runPredictions();
+                return;
+            } else if (choice.equals("t")) {
+                runTraining();
+                return;
+            } else {
+                print("Invalid choice");
+            }
+        }
+    }
+
+    public static void runTraining() {
         Pair<Matrix, Vector> data = loadCSV(csvPath);
         Matrix trainingData = data.getFirst();
         Vector targets = data.getSecond();
 
-        // Step 2: Create a LinearRegression object
+        double learningRate;
+        print("Enter the learning rate: ");
+        learningRate = s.nextDouble();
+        while (learningRate > 0.00003) {
+            print("Learning rate is too high. Please enter a value less than or equal to 0.00003: ");
+            learningRate = s.nextDouble();
+        }
+
+        int epochs = 10000;
+        print("Enter the number of epochs: ");
+        epochs = s.nextInt();
+
         LinearRegression lr = new LinearRegression(trainingData, targets, learningRate, epochs);
-
-        // Step 3: Train the model
         lr.train();
-        System.out.println("Weights: " + lr.weights);
+        print("Weights: " + lr.weights);
+    }
 
-        // Step 4: Predict the output
-        double[] input = {0,3.7629329999999968,-2.805316000000005,8};
-        double output = lr.predict(input);
+    public static void runPredictions() {
+        print("Enter the cause of the fire (HUMAN, UNKNOWN, or NATURAL): ");
+        String fireCause = s.nextLine().toUpperCase();
+        while (!fireCause.equals("HUMAN") && !fireCause.equals("UNKNOWN") && !fireCause.equals("NATURAL")) {
+            print("Invalid cause. Please enter HUMAN, UNKNOWN, or NATURAL: ");
+            fireCause = s.nextLine().toUpperCase();
+        }
 
-        System.out.println("Output: " + output);
+        double fireCauseValue = 0;
+        if (fireCause.equals("HUMAN")) {
+            fireCauseValue = 1;
+        } else if (fireCause.equals("UNKNOWN")) {
+            fireCauseValue = 0;
+        } else if (fireCause.equals("NATURAL")) {
+            fireCauseValue = -1;
+        }
+
+        print("Enter the latitude: ");
+        double latitude = s.nextDouble() - 36;
+
+        print("Enter the longitude: ");
+        double longitude = s.nextDouble() + 120;
+
+        print("Enter the month (1-12): ");
+        int month = s.nextInt();
+        while (month < 1 || month > 12) {
+            print("Invalid month. Please enter a value between 1 and 12: ");
+            month = s.nextInt();
+        }
+
+        print("\nPerforming transformation into Z space...");
+        double[] input = {fireCauseValue, latitude, longitude, month, longitude * longitude, latitude * latitude, latitude * longitude};
+        print("Running calculations...");
+        LinearRegression lr = new LinearRegression(new Vector(calculatedWeights));
+        double prediction = lr.predict(input);
+        String predictionStr = String.format("%.2f", prediction);
+        print("\n\nExpected # of acres burned: " + predictionStr);
+    }
+
+    public static void print(Object o) {
+        System.out.println(o);
     }
 }
